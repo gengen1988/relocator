@@ -2,18 +2,47 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>Relocator</title>
   </head>
   <body>
-    <h1>Hello World!</h1>
-    <!-- All of the Node.js APIs are available in this renderer process. -->
-    We are using Node.js <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+    <h1>Relocator</h1>
+    <p>This program moves a folder to a new place and places a symlink to the origin place.</p>
+    <p>It helps you manage your disk usage.</p>
+
+    <h2>Why?</h2>
+    <p>My `C:\` is full due to `AppData` and `Documents`.</p>
+    <p>See: http://www.zdnet.com/article/dont-move-your-windows-user-profiles-folder-to-another-drive/</p>
+
+    <table border="1">
+      <tr>
+        <td>source:</td>
+        <td><input id="src" type="file" webkitdirectory ></td>
+      </tr>
+      <tr>
+        <td>destination:</td>
+        <td><input id="dest" type="file" webkitdirectory ></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><button id="execute">relocate</button></td>
+      </tr>
+    </table>
 
     <script>
-      // You can also require other files to run in this process
-      require('./renderer.js')
+      const fs = require('fs-extra')
+      execute.onclick = () => {
+        let srcPath = src.files[0].path
+        let destPath = dest.files[0].path
+        fs.copy(srcPath, destPath)
+          .then(() => fs.remove(srcPath))
+          .then(() => fs.symlink(destPath, srcPath, 'dir'))
+          .then(() => {
+            alert('ok')
+          })
+          .catch((err) => {
+            alert(JSON.stringify(err))
+          })
+      }
     </script>
   </body>
 </html>
