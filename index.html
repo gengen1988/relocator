@@ -16,32 +16,63 @@
     <table border="1">
       <tr>
         <td>source:</td>
-        <td><input id="src" type="file" webkitdirectory ></td>
+        <td id="srcText"></td>
+        <td><button id="srcButton">Choose Source</button></td>
       </tr>
       <tr>
         <td>destination:</td>
-        <td><input id="dest" type="file" webkitdirectory ></td>
+        <td id="destText"></td>
+        <td><button id="destButton">Choose Destination</button></td>
       </tr>
       <tr>
         <td></td>
-        <td><button id="execute">relocate</button></td>
+        <td colspan="2"><button id="execute">relocate</button></td>
       </tr>
     </table>
 
     <script>
+      const path = require('path')
       const fs = require('fs-extra')
+      const { dialog } = require('electron').remote
+
+      let src = ""
+      let dest = ""
+
+      srcButton.onclick = () => {
+        src = dialog.showOpenDialogSync({
+          properties: ['openDirectory']
+        })[0]
+        srcText.innerHTML = src
+      }
+
+      destButton.onclick = () => {
+        dest = dialog.showOpenDialogSync({
+          properties: ['openDirectory']
+        })[0]
+        destText.innerHTML = dest
+      }
+
       execute.onclick = () => {
-        let srcPath = src.files[0].path
-        let destPath = dest.files[0].path
-        fs.copy(srcPath, destPath)
-          .then(() => fs.remove(srcPath))
-          .then(() => fs.symlink(destPath, srcPath, 'dir'))
-          .then(() => {
-            alert('ok')
-          })
-          .catch((err) => {
-            alert(JSON.stringify(err))
-          })
+        relocate()
+          .then(val => alert('ok'))
+          .catch(err => alert(JSON.stringify(err)))
+
+      }
+
+      async function relocate() {
+        let basename = path.basename(src)
+        let newDir = path.join(dest, basename)
+        console.log(`source: ${JSON.stringify(src)}`)
+        console.log(`destination: ${JSON.stringify(dest)}`)
+        console.log(`basename: ${basename}`)
+        console.log(`new dir: ${newDir}`)
+
+        await fs.copy(src, newDir)
+        console.log('copy done')
+        await fs.remove(src)
+        console.log('remove done')
+        await fs.ensureSymlink(newDir, src, 'junction')
+        console.log('link done')
       }
     </script>
   </body>
